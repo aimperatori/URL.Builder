@@ -1,17 +1,25 @@
 ﻿using System.Text;
+using URL.Builder.Helper;
 
 namespace URL.Builder
 {
     public class URLBuilder(string authority) : IURLBuilder
     {
-        private readonly StringBuilder _stringBuilder = new();
-        private string _authority = authority;
+        private StringBuilder _stringBuilder = new();
+        private readonly string _authority = authority;
         private string? _path;
-        private Dictionary<string, string> _parameters = new();
+        private int _port;
+        private readonly Dictionary<string, string> _parameters = new();
 
         public IURLBuilder SetPath(string path)
         {
             _path = path;
+            return this;
+        }
+
+        public IURLBuilder SetPort(int port)
+        {
+            _port = port;
             return this;
         }
 
@@ -21,11 +29,19 @@ namespace URL.Builder
             return this;
         }
 
+        public IURLBuilder RemoveParameter(string key)
+        {
+            _parameters.Remove(key);
+            return this;
+        }
+
         public override string ToString()
         {
             _stringBuilder.Clear();
 
             AppendAuthority();
+
+            AppendPort();
 
             AppendPath();
 
@@ -34,19 +50,28 @@ namespace URL.Builder
             return _stringBuilder.ToString();
         }
 
-        private void AppendParameters()
-        {
-            _stringBuilder.Append(FormatParameters());
-        }
-
         private void AppendAuthority()
         {
             _stringBuilder.Append(_authority);
         }
 
+        private void AppendPort()
+        {
+            if (_port > 0)
+            {
+                _stringBuilder = StringBuilderHelper.TrimEnd(_stringBuilder, '/');                
+                _stringBuilder.Append($":{_port}");
+            }
+        }
+
+        private void AppendParameters()
+        {
+            _stringBuilder.Append(FormatParameters());
+        }
+
         private void AppendPath()
         {
-            if (_path != null)
+            if (_path is not null)
             {
                 if (!_stringBuilder.ToString().EndsWith('/'))
                 {
